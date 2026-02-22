@@ -63,34 +63,30 @@ class ConfigManager {
     this.load()
   }
 
+  private loadJsonFile<T>(filePath: string, defaultValue: T): T {
+    try {
+      if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+      }
+    } catch (err) {
+      console.warn(`[ConfigManager] Failed to load ${filePath}:`, (err as Error).message)
+    }
+    return defaultValue
+  }
+
   private load(): void {
-    try {
-      if (fs.existsSync(paths.windowState)) {
-        const data = JSON.parse(fs.readFileSync(paths.windowState, 'utf-8'))
-        this.windowState = { ...DEFAULT_WINDOW_STATE, ...data }
-      }
-    } catch {
-      this.windowState = { ...DEFAULT_WINDOW_STATE }
-    }
+    const windowData = this.loadJsonFile(paths.windowState, null)
+    this.windowState = windowData ? { ...DEFAULT_WINDOW_STATE, ...windowData } : { ...DEFAULT_WINDOW_STATE }
 
-    try {
-      if (fs.existsSync(paths.globalConfig)) {
-        const data = JSON.parse(fs.readFileSync(paths.globalConfig, 'utf-8'))
-        this.globalConfig = { ...DEFAULT_GLOBAL_CONFIG, ...data }
-      }
-    } catch {
-      this.globalConfig = { ...DEFAULT_GLOBAL_CONFIG }
-    }
+    const globalData = this.loadJsonFile(paths.globalConfig, null)
+    this.globalConfig = globalData ? { ...DEFAULT_GLOBAL_CONFIG, ...globalData } : { ...DEFAULT_GLOBAL_CONFIG }
 
-    try {
-      if (fs.existsSync(paths.projectsConfig)) {
-        const data: ProjectConfig[] = JSON.parse(fs.readFileSync(paths.projectsConfig, 'utf-8'))
-        for (const project of data) {
-          this.projects.set(project.id, project)
-        }
+    const projectsData = this.loadJsonFile<ProjectConfig[] | null>(paths.projectsConfig, null)
+    this.projects.clear()
+    if (projectsData) {
+      for (const project of projectsData) {
+        this.projects.set(project.id, project)
       }
-    } catch {
-      this.projects.clear()
     }
   }
 

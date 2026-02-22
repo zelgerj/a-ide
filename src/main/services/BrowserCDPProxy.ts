@@ -361,6 +361,7 @@ class BrowserCDPProxy {
     // WS connects, before ensureView/Chrome WS setup completes.
     const pendingFromClient: string[] = []
     let chromeReady = false
+    let clientClosed = false
 
     // Set up client message handler IMMEDIATELY to capture all messages
     clientWs.on('message', async (data: Buffer | string) => {
@@ -380,11 +381,15 @@ class BrowserCDPProxy {
     })
 
     clientWs.on('close', () => {
+      clientClosed = true
+      pendingFromClient.length = 0
       conn.chromeWs?.close()
       this.clientConnections.delete(clientWs)
     })
 
     clientWs.on('error', () => {
+      clientClosed = true
+      pendingFromClient.length = 0
       conn.chromeWs?.close()
       this.clientConnections.delete(clientWs)
     })
@@ -393,7 +398,7 @@ class BrowserCDPProxy {
 
     // Ensure view exists for this specific project before opening Chrome WS
     this.ensureView(projectId || null).then(() => {
-      if (clientWs.readyState !== WebSocket.OPEN) return
+      if (clientClosed || clientWs.readyState !== WebSocket.OPEN) return
 
       const chromeWs = new WebSocket(this.chromeBrowserWsUrl)
       conn.chromeWs = chromeWs

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react'
 import { useTerminal } from '../../hooks/useTerminal'
 import { useAppStore } from '../../stores/appStore'
 import { AGENT_DEFINITIONS } from '../../constants/agents'
@@ -6,6 +6,15 @@ import PanelContainer from './PanelContainer'
 import PanelExited from './PanelExited'
 import AgentTabBar from './AgentTabBar'
 import type { AgentId } from '../../types'
+
+function buildAgentArgs(agentId: AgentId, claudeArgs?: string[]): string[] {
+  const args = agentId === 'claude' ? [...(claudeArgs || [])] : []
+  const agentDef = AGENT_DEFINITIONS.find((a) => a.id === agentId)
+  if (agentDef) {
+    args.push(...agentDef.defaultArgs)
+  }
+  return args
+}
 
 interface AgentPanelProps {
   projectId: string
@@ -19,14 +28,10 @@ export default function AgentPanel({
   claudeArgs
 }: AgentPanelProps): JSX.Element {
   const focusedPanel = useAppStore((s) => s.focusedPanel)
-  const setFocusedPanel = useAppStore((s) => s.setFocusedPanel)
   const detectedAgents = useAppStore((s) => s.detectedAgents)
   const activeAgents = useAppStore((s) => s.activeAgents)
-  const setActiveAgent = useAppStore((s) => s.setActiveAgent)
   const activatedAgentsPerProject = useAppStore((s) => s.activatedAgentsPerProject)
-  const setActivatedAgents = useAppStore((s) => s.setActivatedAgents)
   const exitedTerminals = useAppStore((s) => s.exitedTerminals)
-  const clearTerminalExited = useAppStore((s) => s.clearTerminalExited)
 
   const activeAgentId = activeAgents.get(projectId) || 'claude'
   const savedActivated = activatedAgentsPerProject.get(projectId)
@@ -49,23 +54,33 @@ export default function AgentPanel({
     return new Set<AgentId>()
   })
 
-  // Persist activated agents + active tab to config
+  // Debounced persist of activated agents + active tab to config
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout>>()
+
   const persistAgentState = useCallback(() => {
-    const state = useAppStore.getState()
-    const agentSessions: Record<string, { activeAgent: string; activatedAgents: string[] }> = {}
-    for (const [pid] of state.activatedAgentsPerProject) {
-      const active = state.activeAgents.get(pid) || 'claude'
-      const activated = state.activatedAgentsPerProject.get(pid) || [active]
-      agentSessions[pid] = { activeAgent: active, activatedAgents: activated }
-    }
-    window.api.invoke('config:update-settings', { agentSessions })
+    clearTimeout(persistTimerRef.current)
+    persistTimerRef.current = setTimeout(() => {
+      const state = useAppStore.getState()
+      const agentSessions: Record<string, { activeAgent: string; activatedAgents: string[] }> = {}
+      for (const [pid] of state.activatedAgentsPerProject) {
+        const active = state.activeAgents.get(pid) || 'claude'
+        const activated = state.activatedAgentsPerProject.get(pid) || [active]
+        agentSessions[pid] = { activeAgent: active, activatedAgents: activated }
+      }
+      window.api.invoke('config:update-settings', { agentSessions })
+    }, 500)
+  }, [])
+
+  // Clean up debounce timer
+  useEffect(() => {
+    return () => clearTimeout(persistTimerRef.current)
   }, [])
 
   // Sync local activatedAgents to store + persist
   useEffect(() => {
     const agents = Array.from(activatedAgents)
-    setActivatedAgents(projectId, agents)
-  }, [activatedAgents, projectId, setActivatedAgents])
+    useAppStore.getState().setActivatedAgents(projectId, agents)
+  }, [activatedAgents, projectId])
 
   // Persist whenever store agent state changes
   useEffect(() => {
@@ -96,9 +111,9 @@ export default function AgentPanel({
         if (prev.has(id)) return prev
         return new Set(prev).add(id)
       })
-      setActiveAgent(projectId, id)
+      useAppStore.getState().setActiveAgent(projectId, id)
     },
-    [projectId, setActiveAgent]
+    [projectId]
   )
 
   // Listen for Ctrl+Tab cycling shortcut
@@ -122,12 +137,8 @@ export default function AgentPanel({
   const isActiveExited = exitedTerminals.has(activeTerminalId)
 
   const handleRestart = (): void => {
-    clearTerminalExited(activeTerminalId)
-    const activeDef = AGENT_DEFINITIONS.find((a) => a.id === activeAgentId)
-    const restartArgs = activeAgentId === 'claude' ? [...(claudeArgs || [])] : []
-    if (activeDef) {
-      restartArgs.push(...activeDef.defaultArgs)
-    }
+    useAppStore.getState().clearTerminalExited(activeTerminalId)
+    const restartArgs = buildAgentArgs(activeAgentId, claudeArgs)
     window.api.invoke('terminal:create', {
       terminalId: activeTerminalId,
       type: activeAgentId,
@@ -154,7 +165,7 @@ export default function AgentPanel({
       type="claude"
       label={availableAgents.find((a) => a.id === activeAgentId)?.label || 'Claude Code'}
       isFocused={focusedPanel === 'claude'}
-      onFocus={() => setFocusedPanel('claude')}
+      onFocus={() => useAppStore.getState().setFocusedPanel('claude')}
       headerContent={headerContent}
     >
       <div className="relative h-full w-full">
@@ -191,7 +202,7 @@ interface AgentTerminalProps {
   isResuming: boolean
 }
 
-function AgentTerminal({
+const AgentTerminal = memo(function AgentTerminal({
   agentId,
   projectId,
   cwd,
@@ -205,10 +216,7 @@ function AgentTerminal({
 
   // Compute args: user args + default args (permissions) + resume args
   const agentArgs = useMemo(() => {
-    const base = agentId === 'claude' ? [...(claudeArgs || [])] : []
-    if (agentDef) {
-      base.push(...agentDef.defaultArgs)
-    }
+    const base = buildAgentArgs(agentId, claudeArgs)
     if (isResuming && agentDef && agentDef.resumeArgs.length > 0) {
       base.push(...agentDef.resumeArgs)
     }
@@ -238,4 +246,4 @@ function AgentTerminal({
       ref={attachRef}
     />
   )
-}
+})

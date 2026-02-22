@@ -1,12 +1,7 @@
-import { useAppStore } from '../../stores/appStore'
+import { useActiveProjectInfo } from '../../hooks/useActiveProjectInfo'
 
 export default function TitleBar(): JSX.Element {
-  const activeProjectId = useAppStore((s) => s.activeProjectId)
-  const projects = useAppStore((s) => s.projects)
-  const gitStatuses = useAppStore((s) => s.gitStatuses)
-
-  const activeProject = projects.find((p) => p.id === activeProjectId)
-  const gitStatus = activeProjectId ? gitStatuses.get(activeProjectId) : undefined
+  const { activeProject, gitStatus } = useActiveProjectInfo()
 
   return (
     <div className="titlebar-drag flex items-center h-[38px] px-3 flex-shrink-0 bg-bg-secondary select-none">

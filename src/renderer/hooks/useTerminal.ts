@@ -1,5 +1,6 @@
 import { useRef, useCallback, useEffect } from 'react'
 import { Terminal } from '@xterm/xterm'
+import type { ITheme } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { WebLinksAddon } from '@xterm/addon-web-links'
@@ -11,6 +12,31 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 function escapePathForShell(filePath: string): string {
   // eslint-disable-next-line no-useless-escape
   return filePath.replace(/(?=[!"#$&'()*,;<=>?[\\\]^`{|}~ ])/g, '\\')
+}
+
+const TERMINAL_THEME: ITheme = {
+  background: '#1e1e1e',
+  foreground: '#cccccc',
+  cursor: '#cccccc',
+  cursorAccent: '#1e1e1e',
+  selectionBackground: '#264f78',
+  selectionForeground: '#ffffff',
+  black: '#1e1e1e',
+  red: '#f44747',
+  green: '#4ec9b0',
+  yellow: '#cca700',
+  blue: '#007acc',
+  magenta: '#c586c0',
+  cyan: '#4ec9b0',
+  white: '#cccccc',
+  brightBlack: '#808080',
+  brightRed: '#f44747',
+  brightGreen: '#4ec9b0',
+  brightYellow: '#cca700',
+  brightBlue: '#007acc',
+  brightMagenta: '#c586c0',
+  brightCyan: '#4ec9b0',
+  brightWhite: '#ffffff'
 }
 
 // Module-level terminal registry — persists across Activity transitions.
@@ -139,30 +165,7 @@ export function useTerminal({
       const term = new Terminal({
         fontSize,
         fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-        theme: {
-          background: '#1e1e1e',
-          foreground: '#cccccc',
-          cursor: '#cccccc',
-          cursorAccent: '#1e1e1e',
-          selectionBackground: '#264f78',
-          selectionForeground: '#ffffff',
-          black: '#1e1e1e',
-          red: '#f44747',
-          green: '#4ec9b0',
-          yellow: '#cca700',
-          blue: '#007acc',
-          magenta: '#c586c0',
-          cyan: '#4ec9b0',
-          white: '#cccccc',
-          brightBlack: '#808080',
-          brightRed: '#f44747',
-          brightGreen: '#4ec9b0',
-          brightYellow: '#cca700',
-          brightBlue: '#007acc',
-          brightMagenta: '#c586c0',
-          brightCyan: '#4ec9b0',
-          brightWhite: '#ffffff'
-        },
+        theme: TERMINAL_THEME,
         cursorBlink: true,
         cursorStyle: 'block',
         scrollback: 10000,

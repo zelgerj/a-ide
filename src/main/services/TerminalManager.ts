@@ -170,13 +170,22 @@ class TerminalManager {
       args = agentArgs || []
     }
 
-    const ptyProcess = pty.spawn(shell, args, {
-      name: 'xterm-256color',
-      cols: 80,
-      rows: 24,
-      cwd,
-      env
-    })
+    let ptyProcess: pty.IPty
+    try {
+      ptyProcess = pty.spawn(shell, args, {
+        name: 'xterm-256color',
+        cols: 80,
+        rows: 24,
+        cwd,
+        env
+      })
+    } catch (err) {
+      console.error(`[TerminalManager] Failed to spawn pty for ${terminalId}:`, err)
+      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+        this.mainWindow.webContents.send('terminal:exit', { terminalId, exitCode: 1, signal: 0 })
+      }
+      return
+    }
 
     const batcher = new PtyBatcher((data: string) => {
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {

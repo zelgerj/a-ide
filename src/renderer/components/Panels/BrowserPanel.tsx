@@ -12,7 +12,6 @@ export default function BrowserPanel({
   initialUrl
 }: BrowserPanelProps): JSX.Element {
   const focusedPanel = useAppStore((s) => s.focusedPanel)
-  const setFocusedPanel = useAppStore((s) => s.setFocusedPanel)
 
   const [url, setUrl] = useState(initialUrl || '')
 
@@ -143,7 +142,7 @@ export default function BrowserPanel({
   return (
     <div
       className="flex flex-col h-full w-full min-h-0 min-w-0 overflow-hidden"
-      onMouseDown={() => setFocusedPanel('browser')}
+      onMouseDown={() => useAppStore.getState().setFocusedPanel('browser')}
     >
       <BrowserUrlBar
         url={displayUrl}

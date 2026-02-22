@@ -275,6 +275,7 @@ class BrowserManager {
     }
 
     if (!instance.view.webContents.isDestroyed()) {
+      instance.view.webContents.removeAllListeners()
       instance.view.webContents.close()
     }
 

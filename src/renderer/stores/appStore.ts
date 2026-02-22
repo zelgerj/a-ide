@@ -98,9 +98,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeAgents.delete(id)
       const activatedAgentsPerProject = new Map(state.activatedAgentsPerProject)
       activatedAgentsPerProject.delete(id)
+      const suffix = `-${id}`
+      const exitedTerminals = new Set(state.exitedTerminals)
+      for (const terminalId of exitedTerminals) {
+        if (terminalId.endsWith(suffix)) {
+          exitedTerminals.delete(terminalId)
+        }
+      }
       const activeProjectId =
         state.activeProjectId === id ? projectOrder[0] || null : state.activeProjectId
-      return { projects, projectOrder, sessions, gitStatuses, activeAgents, activatedAgentsPerProject, activeProjectId }
+      return { projects, projectOrder, sessions, gitStatuses, activeAgents, activatedAgentsPerProject, activeProjectId, exitedTerminals }
     }),
 
   setActiveProject: (id) => set({ activeProjectId: id }),

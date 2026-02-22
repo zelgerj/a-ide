@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useAppStore } from '../../stores/appStore'
 import { destroyProjectTerminals } from '../../hooks/useTerminal'
 import { switchProject } from '../../utils/switchProject'
@@ -12,14 +13,17 @@ export default function Sidebar({ onAddProject }: SidebarProps): JSX.Element {
   const projectOrder = useAppStore((s) => s.projectOrder)
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const gitStatuses = useAppStore((s) => s.gitStatuses)
-  const removeProject = useAppStore((s) => s.removeProject)
 
   // Sort projects by order
-  const sortedProjects = [...projects].sort((a, b) => {
-    const ai = projectOrder.indexOf(a.id)
-    const bi = projectOrder.indexOf(b.id)
-    return ai - bi
-  })
+  const sortedProjects = useMemo(
+    () =>
+      [...projects].sort((a, b) => {
+        const ai = projectOrder.indexOf(a.id)
+        const bi = projectOrder.indexOf(b.id)
+        return ai - bi
+      }),
+    [projects, projectOrder]
+  )
 
   const handleProjectClick = (projectId: string): void => {
     switchProject(projectId)
@@ -28,7 +32,7 @@ export default function Sidebar({ onAddProject }: SidebarProps): JSX.Element {
   const handleRemoveProject = async (projectId: string): Promise<void> => {
     await window.api.invoke('project:remove', projectId)
     destroyProjectTerminals(projectId)
-    removeProject(projectId)
+    useAppStore.getState().removeProject(projectId)
   }
 
   return (

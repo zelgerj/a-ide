@@ -1,12 +1,7 @@
-import { useAppStore } from '../../stores/appStore'
+import { useActiveProjectInfo } from '../../hooks/useActiveProjectInfo'
 
 export default function StatusBar(): JSX.Element {
-  const activeProjectId = useAppStore((s) => s.activeProjectId)
-  const projects = useAppStore((s) => s.projects)
-  const gitStatuses = useAppStore((s) => s.gitStatuses)
-
-  const activeProject = projects.find((p) => p.id === activeProjectId)
-  const gitStatus = activeProjectId ? gitStatuses.get(activeProjectId) : undefined
+  const { activeProject, gitStatus } = useActiveProjectInfo()
 
   return (
     <div className="flex items-center h-[22px] px-3 bg-accent-blue text-text-bright text-[11px] select-none flex-shrink-0">

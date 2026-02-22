@@ -14,10 +14,21 @@ interface GitStatusInfo {
 
 const POLL_INTERVAL = 5000 // 5 seconds
 
+function statusChanged(a: GitStatusInfo, b: GitStatusInfo): boolean {
+  return (
+    a.branch !== b.branch ||
+    a.ahead !== b.ahead ||
+    a.behind !== b.behind ||
+    a.modified !== b.modified ||
+    a.staged !== b.staged ||
+    a.untracked !== b.untracked
+  )
+}
+
 class GitWatcher {
   private watchers: Map<string, ReturnType<typeof setInterval>> = new Map()
   private mainWindow: BrowserWindow | null = null
-  private lastStatuses: Map<string, string> = new Map() // serialized status for change detection
+  private lastStatuses: Map<string, GitStatusInfo> = new Map()
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
@@ -59,7 +70,7 @@ class GitWatcher {
 
   async getStatus(projectPath: string): Promise<GitStatusInfo | null> {
     try {
-      const git: SimpleGit = simpleGit(projectPath)
+      const git: SimpleGit = simpleGit(projectPath, { timeout: { block: 10000 } })
       const status: StatusResult = await git.status()
 
       return {
@@ -80,9 +91,9 @@ class GitWatcher {
     if (!status) return
 
     // Only send update if status changed
-    const serialized = JSON.stringify(status)
-    if (this.lastStatuses.get(projectId) === serialized) return
-    this.lastStatuses.set(projectId, serialized)
+    const prev = this.lastStatuses.get(projectId)
+    if (prev && !statusChanged(prev, status)) return
+    this.lastStatuses.set(projectId, status)
 
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send('git:status-updated', { projectId, status })

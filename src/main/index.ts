@@ -72,7 +72,8 @@ function createWindow(): void {
     mainWindow?.show()
   })
 
-  // Save window state on changes
+  // Save window state on changes (debounced to avoid ~60 calls/sec while dragging)
+  let saveWindowStateTimer: ReturnType<typeof setTimeout> | null = null
   const saveWindowState = (): void => {
     if (!mainWindow || mainWindow.isDestroyed()) return
     const bounds = mainWindow.getBounds()
@@ -84,9 +85,13 @@ function createWindow(): void {
       isMaximized: mainWindow.isMaximized()
     })
   }
+  const debouncedSaveWindowState = (): void => {
+    if (saveWindowStateTimer) clearTimeout(saveWindowStateTimer)
+    saveWindowStateTimer = setTimeout(saveWindowState, 500)
+  }
 
-  mainWindow.on('resize', saveWindowState)
-  mainWindow.on('move', saveWindowState)
+  mainWindow.on('resize', debouncedSaveWindowState)
+  mainWindow.on('move', debouncedSaveWindowState)
 
   // macOS close-vs-quit behavior
   mainWindow.on('close', (e) => {
@@ -97,6 +102,8 @@ function createWindow(): void {
   })
 
   mainWindow.on('closed', () => {
+    if (saveWindowStateTimer) clearTimeout(saveWindowStateTimer)
+    saveWindowState()
     mainWindow = null
   })
 

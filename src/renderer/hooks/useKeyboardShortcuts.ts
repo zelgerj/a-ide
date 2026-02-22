@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useAppStore } from '../stores/appStore'
 import { switchProject } from '../utils/switchProject'
 import type { PanelType } from '../types'
@@ -8,20 +8,11 @@ interface UseKeyboardShortcutsOptions {
 }
 
 export function useKeyboardShortcuts({ onAddProject }: UseKeyboardShortcutsOptions): void {
-  const projects = useAppStore((s) => s.projects)
-  const projectOrder = useAppStore((s) => s.projectOrder)
-  const activeProjectId = useAppStore((s) => s.activeProjectId)
-  const sessions = useAppStore((s) => s.sessions)
-  const activeAgents = useAppStore((s) => s.activeAgents)
-  const setFocusedPanel = useAppStore((s) => s.setFocusedPanel)
-  const toggleSidebar = useAppStore((s) => s.toggleSidebar)
-  const toggleMaximizedPanel = useAppStore((s) => s.toggleMaximizedPanel)
-  const clearTerminalExited = useAppStore((s) => s.clearTerminalExited)
-
   // Cmd+1-9: Switch to project by index
   useEffect(() => {
     const unsub = window.api.on('shortcut:project-switch', (payload: unknown) => {
       const { index } = payload as { index: number }
+      const { projects, projectOrder } = useAppStore.getState()
       const orderedProjects = [...projects].sort((a, b) => {
         return projectOrder.indexOf(a.id) - projectOrder.indexOf(b.id)
       })
@@ -31,36 +22,37 @@ export function useKeyboardShortcuts({ onAddProject }: UseKeyboardShortcutsOptio
       }
     })
     return unsub
-  }, [projects, projectOrder])
+  }, [])
 
   // Option+1/2/3: Focus panel
   useEffect(() => {
     const unsub = window.api.on('shortcut:panel-focus', (payload: unknown) => {
       const { panel } = payload as { panel: PanelType }
-      setFocusedPanel(panel)
+      useAppStore.getState().setFocusedPanel(panel)
     })
     return unsub
-  }, [setFocusedPanel])
+  }, [])
 
   // Cmd+B: Toggle sidebar
   useEffect(() => {
     const unsub = window.api.on('shortcut:toggle-sidebar', () => {
-      toggleSidebar()
+      useAppStore.getState().toggleSidebar()
     })
     return unsub
-  }, [toggleSidebar])
+  }, [])
 
   // Option+F: Toggle maximize
   useEffect(() => {
     const unsub = window.api.on('shortcut:toggle-maximize', () => {
-      toggleMaximizedPanel()
+      useAppStore.getState().toggleMaximizedPanel()
     })
     return unsub
-  }, [toggleMaximizedPanel])
+  }, [])
 
   // Cmd+Shift+R: Restart active agent session
   useEffect(() => {
     const unsub = window.api.on('shortcut:restart-claude', () => {
+      const { activeProjectId, activeAgents, projects, clearTerminalExited } = useAppStore.getState()
       if (!activeProjectId) return
       const agentId = activeAgents.get(activeProjectId) || 'claude'
       const terminalId = `agent-${agentId}-${activeProjectId}`
@@ -73,7 +65,7 @@ export function useKeyboardShortcuts({ onAddProject }: UseKeyboardShortcutsOptio
       })
     })
     return unsub
-  }, [activeProjectId, activeAgents, projects, clearTerminalExited])
+  }, [])
 
   // Cmd+O: Open folder
   useEffect(() => {

@@ -18,9 +18,7 @@ export default function TerminalPanel({
   startCommand
 }: TerminalPanelProps): JSX.Element {
   const focusedPanel = useAppStore((s) => s.focusedPanel)
-  const setFocusedPanel = useAppStore((s) => s.setFocusedPanel)
   const exitedTerminals = useAppStore((s) => s.exitedTerminals)
-  const clearTerminalExited = useAppStore((s) => s.clearTerminalExited)
 
   const { attachRef, terminal } = useTerminal({
     terminalId,
@@ -40,7 +38,7 @@ export default function TerminalPanel({
   }, [focusedPanel, terminal])
 
   const handleRestart = (): void => {
-    clearTerminalExited(terminalId)
+    useAppStore.getState().clearTerminalExited(terminalId)
     window.api.invoke('terminal:restart', { terminalId })
   }
 
@@ -49,7 +47,7 @@ export default function TerminalPanel({
       type="terminal"
       label="Terminal"
       isFocused={focusedPanel === 'terminal'}
-      onFocus={() => setFocusedPanel('terminal')}
+      onFocus={() => useAppStore.getState().setFocusedPanel('terminal')}
     >
       <div className="relative h-full w-full">
         <div ref={attachRef} className="h-full w-full" />

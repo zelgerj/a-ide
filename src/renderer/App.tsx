@@ -20,16 +20,6 @@ export default function App(): JSX.Element {
   const activeProjectId = useAppStore((s) => s.activeProjectId)
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
-  const focusedPanel = useAppStore((s) => s.focusedPanel)
-  const setSidebarWidth = useAppStore((s) => s.setSidebarWidth)
-  const setFocusedPanel = useAppStore((s) => s.setFocusedPanel)
-  const setDetectedAgents = useAppStore((s) => s.setDetectedAgents)
-  const loadAgentSessions = useAppStore((s) => s.loadAgentSessions)
-  const setProjects = useAppStore((s) => s.setProjects)
-  const setProjectOrder = useAppStore((s) => s.setProjectOrder)
-  const setSidebarCollapsed = useAppStore((s) => s.setSidebarCollapsed)
-  const setPanelSplit = useAppStore((s) => s.setPanelSplit)
-  const addProject = useAppStore((s) => s.addProject)
 
   // Project switching listener
   useProjectSwitch()
@@ -41,10 +31,10 @@ export default function App(): JSX.Element {
   useEffect(() => {
     window.api.invoke('agents:detect').then((agents) => {
       if (Array.isArray(agents) && agents.length > 0) {
-        setDetectedAgents(agents as AgentId[])
+        useAppStore.getState().setDetectedAgents(agents as AgentId[])
       }
     })
-  }, [setDetectedAgents])
+  }, [])
 
   // Load initial state from main process
   useEffect(() => {
@@ -61,16 +51,17 @@ export default function App(): JSX.Element {
         } | null
 
         if (settings) {
-          if (settings.projects) setProjects(settings.projects)
-          if (settings.projectOrder) setProjectOrder(settings.projectOrder)
-          if (settings.sidebarWidth) setSidebarWidth(settings.sidebarWidth)
-          if (settings.sidebarCollapsed !== undefined) setSidebarCollapsed(settings.sidebarCollapsed)
+          const store = useAppStore.getState()
+          if (settings.projects) store.setProjects(settings.projects)
+          if (settings.projectOrder) store.setProjectOrder(settings.projectOrder)
+          if (settings.sidebarWidth) store.setSidebarWidth(settings.sidebarWidth)
+          if (settings.sidebarCollapsed !== undefined) store.setSidebarCollapsed(settings.sidebarCollapsed)
           if (settings.panelSplits) {
-            setPanelSplit('vertical', settings.panelSplits.vertical)
-            setPanelSplit('horizontal', settings.panelSplits.horizontal)
+            store.setPanelSplit('vertical', settings.panelSplits.vertical)
+            store.setPanelSplit('horizontal', settings.panelSplits.horizontal)
           }
           if (settings.agentSessions) {
-            loadAgentSessions(settings.agentSessions)
+            store.loadAgentSessions(settings.agentSessions)
           }
           // Activate last active project
           if (settings.activeProjectId) {
@@ -89,10 +80,10 @@ export default function App(): JSX.Element {
     (delta: number) => {
       if (sidebarCollapsed) return
       const newWidth = Math.max(160, Math.min(400, sidebarWidth + delta))
-      setSidebarWidth(newWidth)
+      useAppStore.getState().setSidebarWidth(newWidth)
       window.api.invoke('config:update-settings', { sidebarWidth: newWidth })
     },
-    [sidebarWidth, sidebarCollapsed, setSidebarWidth]
+    [sidebarWidth, sidebarCollapsed]
   )
 
   // Handle add project
@@ -100,13 +91,13 @@ export default function App(): JSX.Element {
     try {
       const result = (await window.api.invoke('app:open-folder-dialog')) as Project | null
       if (result) {
-        addProject(result)
+        useAppStore.getState().addProject(result)
         switchProject(result.id)
       }
     } catch {
       // User cancelled or error
     }
-  }, [addProject])
+  }, [])
 
   // Keyboard shortcuts
   useKeyboardShortcuts({ onAddProject: handleAddProject })
