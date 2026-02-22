@@ -1,6 +1,6 @@
 {
   "name": "a-ide",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A project-centric developer workspace combining Claude Code, terminal, and browser",
   "main": "./out/main/index.js",
