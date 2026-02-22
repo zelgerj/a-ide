@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>A-IDE Browser</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background-color: #1e1e1e;
+      color: #9d9d9d;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+      padding: 32px;
+    }
+    .globe {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 20px;
+      opacity: 0.2;
+    }
+    .globe svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #cccccc;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 12px;
+      line-height: 1.5;
+      opacity: 0.5;
+    }
+    .hint {
+      margin-top: 24px;
+      font-size: 11px;
+      opacity: 0.3;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="globe">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+      </svg>
+    </div>
+    <div class="title">Browser ready</div>
+    <div class="subtitle">Enter a URL above or let Claude navigate for you</div>
+    <div class="hint">Playwright MCP connected to this view</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+appId: com.aide.app
+productName: A-IDE
+directories:
+  buildResources: build
+  output: dist
+files:
+  - "out/**/*"
+extraResources:
+  - from: "resources/browser-placeholder.html"
+    to: "browser-placeholder.html"
+asar: true
+asarUnpack:
+  - "node_modules/node-pty/**"
+  - "**/*.node"
+npmRebuild: true
+mac:
+  target:
+    - target: dmg
+      arch: [arm64]
+  category: public.app-category.developer-tools
+  icon: build/icon.icns
+  darkModeSupport: true
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  identity: null
+dmg:
+  sign: false
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
