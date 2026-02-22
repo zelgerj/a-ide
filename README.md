@@ -65,7 +65,13 @@ Three-panel layout with draggable splitters: agent terminal and shell terminal s
 
 ### Download
 
-Grab the latest `.dmg` from [Releases](https://github.com/zelgerj/a-ide/releases/latest). Open the DMG, drag A-IDE to Applications, then right-click the app and choose **Open** (required on first launch for unsigned apps).
+Grab the latest `.dmg` from [Releases](https://github.com/zelgerj/a-ide/releases/latest). Open the DMG, drag A-IDE to Applications, then remove the quarantine attribute before first launch:
+
+```bash
+xattr -cr /Applications/A-IDE.app
+```
+
+This is required because the app is not code-signed. After running the command, open A-IDE normally.
 
 ### Build from Source
 
