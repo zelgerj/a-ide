@@ -1,5 +1,6 @@
 import { app, BrowserWindow, WebContentsView } from 'electron'
 import path from 'path'
+import { configManager } from './ConfigManager'
 
 interface BrowserViewInstance {
   view: WebContentsView
@@ -55,11 +56,13 @@ class BrowserManager {
     // Forward navigation events to renderer
     view.webContents.on('did-navigate', (_event, navUrl) => {
       instance.currentUrl = navUrl
+      configManager.updateProjectBrowserUrl(projectId, navUrl)
       this.sendToRenderer('browser:url-changed', { projectId, url: navUrl })
     })
 
     view.webContents.on('did-navigate-in-page', (_event, navUrl) => {
       instance.currentUrl = navUrl
+      configManager.updateProjectBrowserUrl(projectId, navUrl)
       this.sendToRenderer('browser:url-changed', { projectId, url: navUrl })
     })
 

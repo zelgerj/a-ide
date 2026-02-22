@@ -185,7 +185,7 @@ function ProjectWorkspace({ project }: ProjectWorkspaceProps): JSX.Element {
         browserPanel={
           <BrowserPanel
             projectId={project.id}
-            initialUrl={project.browserUrl}
+            initialUrl={project.lastBrowserUrl || project.browserUrl}
           />
         }
       />

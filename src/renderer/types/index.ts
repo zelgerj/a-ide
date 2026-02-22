@@ -13,6 +13,7 @@ export interface Project {
   name: string
   path: string
   browserUrl?: string
+  lastBrowserUrl?: string
   startCommand?: string
   claudeArgs?: string[]
   addedAt: number

@@ -76,8 +76,9 @@ class SessionManager {
       const project = configManager.getProject(projectId)
       if (project) {
         // Create browser view if URL configured
-        if (project.browserUrl) {
-          browserManager.create(projectId, project.browserUrl)
+        const browserUrl = project.lastBrowserUrl || project.browserUrl
+        if (browserUrl) {
+          browserManager.create(projectId, browserUrl)
         }
 
         // Start git watcher

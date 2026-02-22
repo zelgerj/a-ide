@@ -14,6 +14,7 @@ export interface ProjectConfig {
   name: string
   path: string
   browserUrl?: string
+  lastBrowserUrl?: string
   startCommand?: string
   claudeArgs?: string[]
   addedAt: number
@@ -57,6 +58,7 @@ class ConfigManager {
   private windowState: WindowState = { ...DEFAULT_WINDOW_STATE }
   private globalConfig: GlobalConfig = { ...DEFAULT_GLOBAL_CONFIG }
   private projects: Map<string, ProjectConfig> = new Map()
+  private browserUrlSaveTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor() {
     ensureConfigDir()
@@ -158,7 +160,29 @@ class ConfigManager {
     } catch { /* ignore write errors */ }
   }
 
+  updateProjectBrowserUrl(projectId: string, url: string): void {
+    // Don't persist internal pages
+    if (!url || url === 'about:blank' || url.includes('browser-placeholder.html')) return
+
+    const project = this.projects.get(projectId)
+    if (!project || project.lastBrowserUrl === url) return
+
+    project.lastBrowserUrl = url
+
+    // Debounce disk write 500ms
+    if (this.browserUrlSaveTimer) clearTimeout(this.browserUrlSaveTimer)
+    this.browserUrlSaveTimer = setTimeout(() => {
+      this.browserUrlSaveTimer = null
+      this.saveProjects()
+    }, 500)
+  }
+
   saveSync(): void {
+    // Flush pending browser URL save
+    if (this.browserUrlSaveTimer) {
+      clearTimeout(this.browserUrlSaveTimer)
+      this.browserUrlSaveTimer = null
+    }
     this.saveWindowState()
     this.saveGlobalConfig()
     this.saveProjects()
