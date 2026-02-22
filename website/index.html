@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A-IDE — Project-Centric Developer Workspace</title>
+  <meta name="description" content="A macOS developer workspace combining Claude Code terminal, shell, and embedded browser with instant project switching.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="container header-inner">
+      <span class="logo">A-IDE</span>
+      <nav>
+        <a href="https://github.com/zelgerj/a-ide" class="nav-link">GitHub</a>
+        <a href="https://github.com/zelgerj/a-ide/releases/latest" class="btn btn-primary btn-sm">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>A project-centric developer workspace</h1>
+        <p class="subtitle">Claude Code terminal, shell, and embedded browser in one window — with instant project switching that preserves your entire workspace state.</p>
+        <div class="hero-actions">
+          <a href="https://github.com/zelgerj/a-ide/releases/latest" class="btn btn-primary">Download for macOS</a>
+          <a href="https://github.com/zelgerj/a-ide" class="btn btn-secondary">View Source</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="container">
+        <div class="features-grid">
+
+          <div class="feature-card">
+            <div class="feature-icon">&#9654;</div>
+            <h3>Claude Code Terminal</h3>
+            <p>Run the Claude Code CLI directly in your workspace. Ask questions, generate code, and iterate — all without leaving the app.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">&#62;&lowbar;</div>
+            <h3>Shell Terminal</h3>
+            <p>Full zsh/bash terminal with drag-and-drop file paths from Finder. Shell-escaped paths pasted automatically.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">&#9741;</div>
+            <h3>Embedded Browser</h3>
+            <p>Preview localhost and any URL alongside your terminals. Native Chromium engine with DevTools support.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">&#8644;</div>
+            <h3>Instant Project Switching</h3>
+            <p>Switch between projects in one click. Terminal sessions, browser tabs, and scroll positions are fully preserved.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="download" id="download">
+      <div class="container">
+        <h2>Get A-IDE</h2>
+        <div class="download-content">
+          <div class="download-option">
+            <h3>Download DMG</h3>
+            <p>macOS 12+ &middot; Apple Silicon (arm64)</p>
+            <a href="https://github.com/zelgerj/a-ide/releases/latest" class="btn btn-primary">Latest Release</a>
+            <p class="note">Unsigned app — right-click &rarr; Open on first launch.</p>
+          </div>
+          <div class="download-option">
+            <h3>Build from Source</h3>
+            <pre><code>git clone https://github.com/zelgerj/a-ide.git
+cd a-ide
+npm ci
+npm run dev</code></pre>
+          </div>
+        </div>
+        <div class="prerequisites">
+          <h4>Prerequisites</h4>
+          <ul>
+            <li>macOS 12 or later</li>
+            <li>Node.js &ge; 22</li>
+            <li><a href="https://docs.anthropic.com/en/docs/claude-code">Claude Code CLI</a></li>
+            <li>Git</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>A-IDE v0.1.0</span>
+      <a href="https://github.com/zelgerj/a-ide">GitHub</a>
+    </div>
+  </footer>
+
+</body>
+</html>

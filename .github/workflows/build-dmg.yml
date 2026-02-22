@@ -1,0 +1,66 @@
+name: Build DMG
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14 # Apple Silicon (arm64)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app and package DMG
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:mac
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.version }}
+          name: A-IDE ${{ steps.tag.outputs.version }}
+          body: |
+            ## Install
+
+            1. Download `A-IDE-*.dmg` below
+            2. Open the DMG and drag A-IDE to Applications
+            3. Right-click A-IDE → **Open** (required for unsigned apps)
+
+            ### Prerequisites
+            - macOS 12+ (Apple Silicon)
+            - [Node.js >= 22](https://nodejs.org/)
+            - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
+          generate_release_notes: true
+          files: dist/*.dmg
+          draft: false
+          prerelease: false
