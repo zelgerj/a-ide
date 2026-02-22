@@ -1,6 +1,6 @@
-# A-IDE
+# A-IDE — Agentic IDE
 
-A project-centric macOS developer workspace combining AI agent terminals, a shell terminal, and an embedded browser — with instant project switching that preserves your entire workspace state.
+A project-centric macOS developer workspace combining AI agent terminals, a shell terminal, and an embedded browser — with instant project switching that preserves your entire workspace state. A-IDE (short for **Agentic IDE**) puts your AI coding agents front and center.
 
 ## Features
 
