@@ -1,5 +1,6 @@
-/* A-IDE Landing Page
-   Colors match the app palette from src/renderer/styles/globals.css */
+/* A-IDE Landing Page — Redesign
+   Colors match the app palette from src/renderer/styles/globals.css
+   Inspired by Linear.app (glassmorphism) + Cursor.com (product-focused hero) */
 
 *,
 *::before,
@@ -20,11 +21,18 @@
   --accent-green: #4ec9b0;
   --border: #3c3c3c;
   --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* New glassmorphism tokens */
+  --glass-bg: rgba(37, 37, 38, 0.6);
+  --glass-border: rgba(60, 60, 60, 0.4);
+  --glass-blur: 12px;
+  --mono-stack: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
 }
 
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -32,6 +40,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-stack);
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 a {
@@ -49,14 +58,18 @@ a:hover {
   padding: 0 24px;
 }
 
-/* ---- Header ---- */
+/* ================================================================
+   HEADER — Glassmorphism sticky bar
+   ================================================================ */
 
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  background: rgba(30, 30, 30, 0.7);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .header-inner {
@@ -76,12 +89,13 @@ header {
 nav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .nav-link {
   color: var(--text-secondary);
   font-size: 0.875rem;
+  transition: color 0.2s;
 }
 
 .nav-link:hover {
@@ -89,34 +103,46 @@ nav {
   text-decoration: none;
 }
 
-/* ---- Buttons ---- */
+/* ================================================================
+   BUTTONS
+   ================================================================ */
 
 .btn {
   display: inline-block;
   padding: 10px 24px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.9375rem;
   font-weight: 500;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
   cursor: pointer;
   border: none;
 }
 
 .btn:hover {
-  opacity: 0.9;
   text-decoration: none;
+  transform: translateY(-1px);
 }
 
 .btn-primary {
   background: var(--accent-blue);
   color: var(--text-bright);
+  box-shadow: 0 2px 12px rgba(0, 122, 204, 0.3);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(0, 122, 204, 0.4);
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
+  background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .btn-sm {
@@ -124,26 +150,47 @@ nav {
   font-size: 0.8125rem;
 }
 
-/* ---- Hero ---- */
+/* ================================================================
+   HERO — Product-focused with CSS app mockup
+   ================================================================ */
 
 .hero {
-  padding: 80px 0 64px;
+  padding: 80px 0 48px;
   text-align: center;
+  position: relative;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.8125rem;
+  color: var(--accent-green);
+  background: rgba(78, 201, 176, 0.08);
+  border: 1px solid rgba(78, 201, 176, 0.2);
+  margin-bottom: 24px;
+  animation: hero-enter 0.6s ease both;
 }
 
 .hero h1 {
-  font-size: 2.5rem;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
   font-weight: 700;
   color: var(--text-bright);
-  line-height: 1.2;
-  margin-bottom: 16px;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+  animation: hero-enter 0.6s ease 0.1s both;
 }
 
 .subtitle {
   font-size: 1.125rem;
   color: var(--text-secondary);
-  max-width: 600px;
-  margin: 0 auto 32px;
+  max-width: 620px;
+  margin: 0 auto 36px;
+  line-height: 1.7;
+  animation: hero-enter 0.6s ease 0.2s both;
 }
 
 .hero-actions {
@@ -151,74 +198,445 @@ nav {
   gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
+  animation: hero-enter 0.6s ease 0.3s both;
 }
 
-/* ---- Features ---- */
+/* Staggered hero entrance */
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================================================================
+   CSS APP MOCKUP — The centerpiece
+   ================================================================ */
+
+.mockup-wrapper {
+  position: relative;
+  max-width: 900px;
+  margin: 56px auto 0;
+  animation: hero-enter 0.7s ease 0.45s both;
+}
+
+/* Ambient glow behind mockup */
+.mockup-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 122, 204, 0.15) 0%,
+    rgba(78, 201, 176, 0.08) 40%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mockup {
+  position: relative;
+  z-index: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  background: var(--bg-primary);
+  aspect-ratio: 16 / 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title bar */
+.mockup-titlebar {
+  height: 38px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.traffic-light.red { background: #ff5f56; }
+.traffic-light.yellow { background: #ffbd2e; }
+.traffic-light.green { background: #27c93f; }
+
+.mockup-titlebar-text {
+  font-family: var(--mono-stack);
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  display: flex;
+  gap: 10px;
+}
+
+.mockup-titlebar-text .branch {
+  color: var(--accent-green);
+}
+
+/* Main panel area */
+.mockup-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Sidebar */
+.mockup-sidebar {
+  width: 15%;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.mockup-sidebar-header {
+  padding: 8px 10px;
+  font-family: var(--mono-stack);
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--border);
+}
+
+.mockup-sidebar-item {
+  padding: 5px 10px;
+  font-family: var(--mono-stack);
+  font-size: 10px;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mockup-sidebar-item.active {
+  background: rgba(0, 122, 204, 0.12);
+  color: var(--text-bright);
+}
+
+.mockup-sidebar-item .item-branch {
+  font-size: 9px;
+  color: var(--accent-green);
+}
+
+/* Left column — Claude + Terminal stacked */
+.mockup-left {
+  width: 42%;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Panel header shared */
+.mockup-panel-header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-family: var(--mono-stack);
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.mockup-panel-header.focused {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--accent-blue);
+  color: var(--text-bright);
+}
+
+.mockup-panel-header .tab-icon {
+  color: var(--accent-green);
+}
+
+/* Claude panel */
+.mockup-claude {
+  flex: 6;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border);
+}
+
+.mockup-claude-content {
+  flex: 1;
+  padding: 8px 10px;
+  font-family: var(--mono-stack);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.mockup-line {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.mockup-line .prompt {
+  color: var(--accent-blue);
+}
+
+.mockup-line .text {
+  color: var(--text-primary);
+}
+
+.mockup-line .highlight {
+  color: var(--accent-green);
+}
+
+.mockup-line .num {
+  color: #b5cea8;
+}
+
+/* Blinking cursor */
+.cursor-blink {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  background: var(--accent-green);
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Terminal panel */
+.mockup-terminal {
+  flex: 4;
+  display: flex;
+  flex-direction: column;
+}
+
+.mockup-terminal-content {
+  flex: 1;
+  padding: 8px 10px;
+  font-family: var(--mono-stack);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* Right column — Browser */
+.mockup-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+
+/* Browser URL bar */
+.mockup-browser-bar {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.browser-nav-btn {
+  font-size: 10px;
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.browser-url {
+  flex: 1;
+  height: 18px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  font-family: var(--mono-stack);
+  font-size: 9px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Abstract webpage content */
+.mockup-browser-content {
+  flex: 1;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.browser-rect {
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+}
+
+.browser-rect.wide { width: 70%; height: 10px; }
+.browser-rect.medium { width: 50%; height: 10px; }
+.browser-rect.narrow { width: 30%; height: 8px; }
+.browser-rect.block { width: 100%; height: 40px; border-radius: 6px; }
+.browser-rect.half { width: 48%; height: 28px; display: inline-block; border-radius: 6px; }
+
+.browser-rects-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Status bar */
+.mockup-statusbar {
+  height: 22px;
+  background: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-family: var(--mono-stack);
+  font-size: 10px;
+  color: var(--text-bright);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.mockup-statusbar .status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mockup-statusbar .status-git {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ================================================================
+   FEATURES — Single-column stacked cards with fade-in
+   ================================================================ */
 
 .features {
-  padding: 64px 0;
+  padding: 80px 0;
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+.features .section-heading {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 48px;
+  letter-spacing: -0.01em;
+}
+
+.features-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .feature-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 28px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 28px 28px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 122, 204, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 122, 204, 0.1);
 }
 
 .feature-icon {
-  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(78, 201, 176, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
   color: var(--accent-green);
-  margin-bottom: 12px;
-  font-family: monospace;
+  font-family: var(--mono-stack);
 }
 
-.feature-card h3 {
+.feature-text h3 {
   font-size: 1.0625rem;
   font-weight: 600;
   color: var(--text-bright);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.feature-card p {
+.feature-text p {
   font-size: 0.9375rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* ---- Download ---- */
+/* ================================================================
+   DOWNLOAD — Glassmorphism cards
+   ================================================================ */
 
 .download {
-  padding: 64px 0;
-  border-top: 1px solid var(--border);
+  padding: 80px 0;
 }
 
 .download h2 {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-bright);
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   text-align: center;
+  letter-spacing: -0.01em;
 }
 
 .download-content {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .download-option {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
   padding: 28px 24px;
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.download-option:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 122, 204, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .download-option h3 {
@@ -242,9 +660,9 @@ nav {
 }
 
 .download-option pre {
-  background: var(--bg-primary);
+  background: rgba(30, 30, 30, 0.8);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px;
   overflow-x: auto;
 }
@@ -252,8 +670,8 @@ nav {
 .download-option code {
   font-size: 0.8125rem;
   color: var(--accent-green);
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-  line-height: 1.6;
+  font-family: var(--mono-stack);
+  line-height: 1.7;
 }
 
 .prerequisites {
@@ -264,33 +682,37 @@ nav {
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .prerequisites ul {
   list-style: none;
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .prerequisites li {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 100px;
+  padding: 6px 16px;
 }
 
-.prerequisites li::before {
-  content: "\2022";
+.prerequisites li a {
   color: var(--accent-blue);
-  margin-right: 6px;
 }
 
-/* ---- Footer ---- */
+/* ================================================================
+   FOOTER — Minimal
+   ================================================================ */
 
 footer {
-  border-top: 1px solid var(--border);
-  padding: 24px 0;
+  border-top: 1px solid var(--glass-border);
+  padding: 40px 0;
 }
 
 .footer-inner {
@@ -301,24 +723,120 @@ footer {
   color: var(--text-secondary);
 }
 
-/* ---- Responsive ---- */
+.footer-inner .footer-tech {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
 
-@media (max-width: 640px) {
+/* ================================================================
+   SCROLL-TRIGGERED FADE-IN
+   ================================================================ */
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.fade-in.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.fade-in:nth-child(2) { transition-delay: 0.08s; }
+.fade-in:nth-child(3) { transition-delay: 0.16s; }
+.fade-in:nth-child(4) { transition-delay: 0.24s; }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+
+@media (max-width: 768px) {
   .hero {
-    padding: 48px 0 40px;
+    padding: 56px 0 40px;
   }
 
-  .hero h1 {
-    font-size: 1.75rem;
+  .nav-anchor {
+    display: none;
+  }
+
+  .mockup-wrapper {
+    margin-top: 40px;
+  }
+
+  .features .section-heading {
+    font-size: 1.5rem;
+  }
+
+  .download-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .hero {
+    padding: 40px 0 32px;
   }
 
   .subtitle {
     font-size: 1rem;
   }
 
-  .features-grid,
-  .download-content {
-    grid-template-columns: 1fr;
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+  }
+
+  .mockup-wrapper {
+    margin-top: 32px;
+  }
+
+  /* Simplify mockup on very small screens */
+  .mockup-sidebar-item .item-branch {
+    display: none;
+  }
+
+  .mockup-line {
+    font-size: 0;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    margin-bottom: 4px;
+    width: 80%;
+  }
+
+  .mockup-line:nth-child(even) {
+    width: 60%;
+  }
+
+  .mockup-line .prompt,
+  .mockup-line .text,
+  .mockup-line .highlight,
+  .mockup-line .num,
+  .cursor-blink {
+    display: none;
+  }
+
+  .feature-card {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .feature-icon {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
   }
 
   .prerequisites ul {
