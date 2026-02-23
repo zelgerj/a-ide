@@ -2,6 +2,13 @@ import { app, BrowserWindow, WebContentsView } from 'electron'
 import path from 'path'
 import { configManager } from './ConfigManager'
 
+const SCROLLBAR_CSS = `
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555555; }
+`
+
 interface BrowserViewInstance {
   view: WebContentsView
   projectId: string
@@ -80,6 +87,11 @@ class BrowserManager {
 
     view.webContents.on('page-favicon-updated', (_event, favicons) => {
       this.sendToRenderer('browser:favicon-changed', { projectId, favicon: favicons[0] || '' })
+    })
+
+    // Inject scrollbar styles early (dom-ready fires before first paint)
+    view.webContents.on('dom-ready', () => {
+      view.webContents.insertCSS(SCROLLBAR_CSS).catch(() => {})
     })
 
     // Prevent browser from stealing focus from terminal
