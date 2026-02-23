@@ -7,6 +7,7 @@ import { processManager } from './services/ProcessManager'
 import { browserManager } from './services/BrowserManager'
 import { browserCDPProxy } from './services/BrowserCDPProxy'
 import { gitWatcher } from './services/GitWatcher'
+import { fileSystemManager } from './services/FileSystemManager'
 import { registerAllIpc } from './ipc'
 
 app.setName('A-IDE')
@@ -166,6 +167,13 @@ function createWindow(): void {
       })
       return
     }
+
+    // Cmd+E: Toggle file tree
+    if (input.meta && !input.shift && !input.alt && input.key === 'e') {
+      event.preventDefault()
+      mainWindow.webContents.send('shortcut:toggle-file-tree')
+      return
+    }
   })
 
   // Load the renderer
@@ -245,6 +253,7 @@ app.whenReady().then(async () => {
     sessionManager.setMainWindow(mainWindow)
     browserManager.setMainWindow(mainWindow)
     gitWatcher.setMainWindow(mainWindow)
+    fileSystemManager.setMainWindow(mainWindow)
   }
 
   // Start CDP proxy (reads Chrome's DevToolsActivePort, starts filtering proxy)
@@ -291,6 +300,7 @@ app.on('before-quit', () => {
   browserCDPProxy.stop()
   configManager.saveSync()
   gitWatcher.unwatchAll()
+  fileSystemManager.unwatchAll()
   browserManager.closeAll()
   processManager.shutdownAll()
 })

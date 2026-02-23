@@ -53,3 +53,30 @@ export interface TerminalExitInfo {
   exitCode: number
   signal?: number
 }
+
+export interface DirEntry {
+  name: string
+  path: string
+  isDirectory: boolean
+  size: number
+  modifiedAt: number
+}
+
+export interface OpenFileState {
+  filePath: string
+  fileName: string
+  language: string
+}
+
+export interface ChangedFile {
+  path: string        // Relative path to project root
+  absolutePath: string
+  name: string        // File name
+  status: 'modified' | 'added' | 'deleted' | 'untracked' | 'renamed'
+}
+
+export interface OpenDiffState {
+  filePath: string
+  fileName: string
+  language: string
+}

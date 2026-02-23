@@ -74,4 +74,16 @@ export function useKeyboardShortcuts({ onAddProject }: UseKeyboardShortcutsOptio
     })
     return unsub
   }, [onAddProject])
+
+  // Cmd+E: Toggle file tree
+  useEffect(() => {
+    const unsub = window.api.on('shortcut:toggle-file-tree', () => {
+      const store = useAppStore.getState()
+      store.toggleSidebarMode()
+      if (store.sidebarCollapsed) {
+        store.setSidebarCollapsed(false)
+      }
+    })
+    return unsub
+  }, [])
 }

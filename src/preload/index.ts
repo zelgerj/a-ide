@@ -22,10 +22,16 @@ const ALLOWED_INVOKE = [
   'browser:hide-all',
   'browser:hide-except',
   'git:get-status',
+  'git:get-changed-files',
+  'git:get-file-diff',
   'config:get-settings',
   'config:update-settings',
   'app:open-folder-dialog',
-  'agents:detect'
+  'agents:detect',
+  'filesystem:read-dir',
+  'filesystem:read-file',
+  'filesystem:watch-dir',
+  'filesystem:unwatch-dir'
 ] as const
 
 const ALLOWED_EVENTS = [
@@ -33,6 +39,7 @@ const ALLOWED_EVENTS = [
   'terminal:exit',
   'session:switched',
   'git:status-updated',
+  'git:changed-files-updated',
   'browser:url-changed',
   'browser:title-changed',
   'browser:loading-changed',
@@ -43,7 +50,9 @@ const ALLOWED_EVENTS = [
   'shortcut:toggle-maximize',
   'shortcut:restart-claude',
   'shortcut:open-folder',
-  'shortcut:cycle-agent'
+  'shortcut:cycle-agent',
+  'shortcut:toggle-file-tree',
+  'filesystem:dir-changed'
 ] as const
 
 type InvokeChannel = (typeof ALLOWED_INVOKE)[number]

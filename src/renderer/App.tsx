@@ -2,6 +2,7 @@ import { useEffect, useCallback, Activity } from 'react'
 import { useAppStore } from './stores/appStore'
 import { useProjectSwitch, useProjectSession } from './hooks/useProjectSwitch'
 import { useGitStatus } from './hooks/useGitStatus'
+import { useChangedFiles } from './hooks/useChangedFiles'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { switchProject } from './utils/switchProject'
 import Sidebar from './components/Sidebar/Sidebar'
@@ -11,6 +12,8 @@ import ResizeHandle from './components/Layout/ResizeHandle'
 import AgentPanel from './components/Panels/AgentPanel'
 import TerminalPanel from './components/Panels/TerminalPanel'
 import BrowserPanel from './components/Panels/BrowserPanel'
+import FileViewerPanel from './components/Panels/FileViewerPanel'
+import DiffViewerPanel from './components/Panels/DiffViewerPanel'
 import PanelLoading from './components/Panels/PanelLoading'
 import TitleBar from './components/StatusBar/TitleBar'
 import type { Project, AgentId } from './types'
@@ -26,6 +29,9 @@ export default function App(): JSX.Element {
 
   // Git status listener
   useGitStatus()
+
+  // Changed files listener (for diff view)
+  useChangedFiles()
 
   // Detect installed agents on startup
   useEffect(() => {
@@ -152,6 +158,8 @@ interface ProjectWorkspaceProps {
 
 function ProjectWorkspace({ project }: ProjectWorkspaceProps): JSX.Element {
   const session = useProjectSession(project.id)
+  const openFile = useAppStore((s) => s.openFiles.get(project.id))
+  const openDiff = useAppStore((s) => s.openDiff.get(project.id))
 
   // Terminal IDs
   const shellTerminalId = session?.shellTerminalId || `shell-${project.id}`
@@ -163,6 +171,29 @@ function ProjectWorkspace({ project }: ProjectWorkspaceProps): JSX.Element {
       </div>
     )
   }
+
+  const rightPanel = openDiff ? (
+    <DiffViewerPanel
+      projectId={project.id}
+      filePath={openDiff.filePath}
+      fileName={openDiff.fileName}
+      language={openDiff.language}
+      onClose={() => useAppStore.getState().setOpenDiff(project.id, null)}
+    />
+  ) : openFile ? (
+    <FileViewerPanel
+      projectId={project.id}
+      filePath={openFile.filePath}
+      fileName={openFile.fileName}
+      language={openFile.language}
+      onClose={() => useAppStore.getState().setOpenFile(project.id, null)}
+    />
+  ) : (
+    <BrowserPanel
+      projectId={project.id}
+      initialUrl={project.lastBrowserUrl || project.browserUrl}
+    />
+  )
 
   return (
     <div className="absolute inset-0">
@@ -182,12 +213,7 @@ function ProjectWorkspace({ project }: ProjectWorkspaceProps): JSX.Element {
             startCommand={project.startCommand}
           />
         }
-        browserPanel={
-          <BrowserPanel
-            projectId={project.id}
-            initialUrl={project.lastBrowserUrl || project.browserUrl}
-          />
-        }
+        browserPanel={rightPanel}
       />
     </div>
   )

@@ -4,6 +4,7 @@ import { registerConfigIpc } from './config'
 import { registerSessionIpc } from './session'
 import { registerBrowserIpc } from './browser'
 import { registerGitIpc } from './git'
+import { registerFilesystemIpc } from './filesystem'
 
 export function registerAllIpc(): void {
   registerTerminalIpc()
@@ -12,4 +13,5 @@ export function registerAllIpc(): void {
   registerSessionIpc()
   registerBrowserIpc()
   registerGitIpc()
+  registerFilesystemIpc()
 }

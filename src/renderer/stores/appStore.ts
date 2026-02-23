@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PanelType, PanelSplits, GitStatus, ProjectSession, AgentId } from '../types'
+import type { Project, PanelType, PanelSplits, GitStatus, ProjectSession, AgentId, OpenFileState, ChangedFile, OpenDiffState } from '../types'
 
 interface AppState {
   // Projects
@@ -16,9 +16,18 @@ interface AppState {
   // Layout
   sidebarWidth: number
   sidebarCollapsed: boolean
+  sidebarMode: 'projects' | 'files'
   panelSplits: PanelSplits
   focusedPanel: PanelType
   maximizedPanel: PanelType | null
+
+  // File viewer
+  openFiles: Map<string, OpenFileState>
+
+  // Diff viewer
+  changedFiles: Map<string, ChangedFile[]>
+  openDiff: Map<string, OpenDiffState>
+  fileTreeShowChangesOnly: boolean
 
   // Git
   gitStatuses: Map<string, GitStatus>
@@ -46,7 +55,18 @@ interface AppState {
   // Actions - Layout
   setSidebarWidth: (width: number) => void
   setSidebarCollapsed: (collapsed: boolean) => void
+  setSidebarMode: (mode: 'projects' | 'files') => void
+  toggleSidebarMode: () => void
   toggleSidebar: () => void
+
+  // Actions - File viewer
+  setOpenFile: (projectId: string, file: OpenFileState | null) => void
+
+  // Actions - Diff viewer
+  setChangedFiles: (projectId: string, files: ChangedFile[]) => void
+  setOpenDiff: (projectId: string, diff: OpenDiffState | null) => void
+  setFileTreeShowChangesOnly: (value: boolean) => void
+
   setPanelSplit: (axis: 'vertical' | 'horizontal', value: number) => void
   setFocusedPanel: (panel: PanelType) => void
   setMaximizedPanel: (panel: PanelType | null) => void
@@ -71,9 +91,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   activatedAgentsPerProject: new Map(),
   sidebarWidth: 220,
   sidebarCollapsed: false,
+  sidebarMode: 'projects',
   panelSplits: { vertical: 0.66, horizontal: 0.6 },
   focusedPanel: 'claude',
   maximizedPanel: null,
+  openFiles: new Map(),
+  changedFiles: new Map(),
+  openDiff: new Map(),
+  fileTreeShowChangesOnly: false,
   gitStatuses: new Map(),
   exitedTerminals: new Set(),
 
@@ -98,6 +123,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeAgents.delete(id)
       const activatedAgentsPerProject = new Map(state.activatedAgentsPerProject)
       activatedAgentsPerProject.delete(id)
+      const openFiles = new Map(state.openFiles)
+      openFiles.delete(id)
+      const changedFiles = new Map(state.changedFiles)
+      changedFiles.delete(id)
+      const openDiff = new Map(state.openDiff)
+      openDiff.delete(id)
       const suffix = `-${id}`
       const exitedTerminals = new Set(state.exitedTerminals)
       for (const terminalId of exitedTerminals) {
@@ -107,7 +138,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       const activeProjectId =
         state.activeProjectId === id ? projectOrder[0] || null : state.activeProjectId
-      return { projects, projectOrder, sessions, gitStatuses, activeAgents, activatedAgentsPerProject, activeProjectId, exitedTerminals }
+      return { projects, projectOrder, sessions, gitStatuses, activeAgents, activatedAgentsPerProject, openFiles, changedFiles, openDiff, activeProjectId, exitedTerminals }
     }),
 
   setActiveProject: (id) => set({ activeProjectId: id }),
@@ -177,7 +208,51 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
+  setSidebarMode: (mode) => set({ sidebarMode: mode }),
+
+  toggleSidebarMode: () =>
+    set((state) => ({
+      sidebarMode: state.sidebarMode === 'projects' ? 'files' : 'projects'
+    })),
+
   toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+
+  setOpenFile: (projectId, file) =>
+    set((state) => {
+      const openFiles = new Map(state.openFiles)
+      if (file) {
+        openFiles.set(projectId, file)
+      } else {
+        openFiles.delete(projectId)
+      }
+      // Clear diff when opening a regular file
+      const openDiff = new Map(state.openDiff)
+      openDiff.delete(projectId)
+      return { openFiles, openDiff }
+    }),
+
+  setChangedFiles: (projectId, files) =>
+    set((state) => {
+      const changedFiles = new Map(state.changedFiles)
+      changedFiles.set(projectId, files)
+      return { changedFiles }
+    }),
+
+  setOpenDiff: (projectId, diff) =>
+    set((state) => {
+      const openDiff = new Map(state.openDiff)
+      if (diff) {
+        openDiff.set(projectId, diff)
+      } else {
+        openDiff.delete(projectId)
+      }
+      // Clear regular file when opening a diff
+      const openFiles = new Map(state.openFiles)
+      if (diff) openFiles.delete(projectId)
+      return { openDiff, openFiles }
+    }),
+
+  setFileTreeShowChangesOnly: (value) => set({ fileTreeShowChangesOnly: value }),
 
   setPanelSplit: (axis, value) =>
     set((state) => ({
