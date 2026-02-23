@@ -29,9 +29,7 @@ const ALLOWED_INVOKE = [
   'app:open-folder-dialog',
   'agents:detect',
   'filesystem:read-dir',
-  'filesystem:read-file',
-  'filesystem:watch-dir',
-  'filesystem:unwatch-dir'
+  'filesystem:read-file'
 ] as const
 
 const ALLOWED_EVENTS = [
@@ -52,7 +50,7 @@ const ALLOWED_EVENTS = [
   'shortcut:open-folder',
   'shortcut:cycle-agent',
   'shortcut:toggle-file-tree',
-  'filesystem:dir-changed'
+  'filesystem:files-changed'
 ] as const
 
 type InvokeChannel = (typeof ALLOWED_INVOKE)[number]

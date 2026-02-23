@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef, useState, useMemo } from 'react'
 import { Tree, type NodeRendererProps } from 'react-arborist'
 import { useAppStore } from '../../stores/appStore'
 import { getFileIcon, getChevronIcon } from '../Shared/FileIcons'
-import type { DirEntry, ChangedFile } from '../../types'
+import type { DirEntry, ChangedFile, FileChangeEvent } from '../../types'
 
 interface FileTreeProps {
   projectId: string
@@ -121,7 +121,7 @@ function Node({ node, style, tree }: NodeRendererProps<TreeNode>): JSX.Element {
 export default function FileTree({ projectId, projectPath }: FileTreeProps): JSX.Element {
   const [treeData, setTreeData] = useState<TreeNode[]>([])
   const [loading, setLoading] = useState(true)
-  // Track expanded dirs for watching
+  // Track expanded dirs for selective refresh
   const expandedDirs = useRef(new Set<string>())
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerHeight, setContainerHeight] = useState(400)
@@ -144,65 +144,38 @@ export default function FileTree({ projectId, projectPath }: FileTreeProps): JSX
 
   const effectiveTreeData = showChangesOnly ? changesOnlyData : treeData
 
-  // Load root directory
+  // Reusable root loader
+  const loadRoot = useCallback(async () => {
+    try {
+      const entries = (await window.api.invoke('filesystem:read-dir', {
+        projectId,
+        dirPath: projectPath
+      })) as DirEntry[]
+
+      const nodes: TreeNode[] = entries.map((entry) => ({
+        id: entry.path,
+        name: entry.name,
+        isDirectory: entry.isDirectory,
+        children: entry.isDirectory ? [] : undefined
+      }))
+
+      setTreeData(nodes)
+    } catch (err) {
+      console.error('[FileTree] Failed to load root:', err)
+    }
+  }, [projectId, projectPath])
+
+  // Load root directory on mount
   useEffect(() => {
     let cancelled = false
     setLoading(true)
 
-    async function loadRoot(): Promise<void> {
-      try {
-        const entries = (await window.api.invoke('filesystem:read-dir', {
-          projectId,
-          dirPath: projectPath
-        })) as DirEntry[]
+    loadRoot().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
 
-        if (cancelled) return
-
-        const nodes: TreeNode[] = entries.map((entry) => ({
-          id: entry.path,
-          name: entry.name,
-          isDirectory: entry.isDirectory,
-          children: entry.isDirectory ? [] : undefined
-        }))
-
-        setTreeData(nodes)
-      } catch (err) {
-        console.error('[FileTree] Failed to load root:', err)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    loadRoot()
     return () => { cancelled = true }
-  }, [projectId, projectPath])
-
-  // Listen for dir-changed events to refresh
-  useEffect(() => {
-    const unsub = window.api.on('filesystem:dir-changed', (payload: unknown) => {
-      const { dirPath } = payload as { dirPath: string }
-      if (expandedDirs.current.has(dirPath)) {
-        loadChildren(dirPath)
-      }
-    })
-    return unsub
-  }, [projectId])
-
-  // Measure container dimensions for virtualization.
-  // Depends on `loading` so the observer is attached after the tree container mounts
-  // (during loading a different element is rendered and containerRef is null).
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height)
-        setContainerWidth(entry.contentRect.width)
-      }
-    })
-    ro.observe(container)
-    return () => ro.disconnect()
-  }, [loading])
+  }, [loadRoot])
 
   const loadChildren = useCallback(
     async (dirPath: string) => {
@@ -227,19 +200,50 @@ export default function FileTree({ projectId, projectPath }: FileTreeProps): JSX
     [projectId]
   )
 
+  // Listen for files-changed events to refresh affected expanded dirs
+  useEffect(() => {
+    const unsub = window.api.on('filesystem:files-changed', (payload: unknown) => {
+      const { projectId: eventProjectId, affectedDirs } = payload as FileChangeEvent
+      if (eventProjectId !== projectId) return
+
+      for (const dir of affectedDirs) {
+        if (dir === projectPath) {
+          loadRoot()
+        } else if (expandedDirs.current.has(dir)) {
+          loadChildren(dir)
+        }
+      }
+    })
+    return unsub
+  }, [projectId, projectPath, loadRoot, loadChildren])
+
+  // Measure container dimensions for virtualization.
+  // Depends on `loading` so the observer is attached after the tree container mounts
+  // (during loading a different element is rendered and containerRef is null).
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerHeight(entry.contentRect.height)
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [loading])
+
   const handleToggle = useCallback(
     (id: string) => {
       const isExpanding = !expandedDirs.current.has(id)
       if (isExpanding) {
         expandedDirs.current.add(id)
         loadChildren(id)
-        window.api.invoke('filesystem:watch-dir', { projectId, dirPath: id })
       } else {
         expandedDirs.current.delete(id)
-        window.api.invoke('filesystem:unwatch-dir', { projectId, dirPath: id })
       }
     },
-    [projectId, loadChildren]
+    [loadChildren]
   )
 
   const handleSelect = useCallback(
@@ -270,16 +274,6 @@ export default function FileTree({ projectId, projectPath }: FileTreeProps): JSX
     },
     [projectId]
   )
-
-  // Cleanup watchers on unmount
-  useEffect(() => {
-    return () => {
-      for (const dirPath of expandedDirs.current) {
-        window.api.invoke('filesystem:unwatch-dir', { projectId, dirPath })
-      }
-      expandedDirs.current.clear()
-    }
-  }, [projectId])
 
   if (loading && !showChangesOnly) {
     return (

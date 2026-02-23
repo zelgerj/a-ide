@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import type { FileChangeEvent } from '../types'
 
 interface FileContentResult {
   content: string | null
@@ -117,6 +118,87 @@ export function useFileContent(projectId: string, filePath: string | null): File
           size: 0
         })
       })
+  }, [projectId, filePath])
+
+  // Auto-refresh on file changes from @parcel/watcher
+  useEffect(() => {
+    if (!filePath) return
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined
+
+    const unsub = window.api.on('filesystem:files-changed', (payload: unknown) => {
+      const { projectId: eventProjectId, changes } = payload as FileChangeEvent
+      if (eventProjectId !== projectId) return
+
+      const change = changes.find((c) => c.path === filePath)
+      if (!change) return
+
+      // Invalidate cache immediately
+      cache.delete(filePath)
+
+      if (change.type === 'delete') {
+        setState({
+          content: null,
+          binary: false,
+          loading: false,
+          error: 'File was deleted',
+          truncated: false,
+          size: 0
+        })
+        return
+      }
+
+      // Debounced re-fetch for create/update
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        const loadId = ++loadIdRef.current
+        window.api
+          .invoke('filesystem:read-file', { projectId, filePath })
+          .then((result: unknown) => {
+            if (loadId !== loadIdRef.current) return
+            const data = result as {
+              content: string
+              binary: boolean
+              truncated: boolean
+              size: number
+              mimeType?: string
+            }
+            cache.set(filePath, {
+              content: data.content,
+              binary: data.binary,
+              mimeType: data.mimeType,
+              truncated: data.truncated,
+              size: data.size
+            })
+            cacheOrder.push(filePath)
+            evictCache()
+            setState({
+              content: data.content,
+              binary: data.binary,
+              loading: false,
+              error: null,
+              mimeType: data.mimeType,
+              truncated: data.truncated,
+              size: data.size
+            })
+          })
+          .catch((err: Error) => {
+            if (loadId !== loadIdRef.current) return
+            setState({
+              content: null,
+              binary: false,
+              loading: false,
+              error: err.message,
+              truncated: false,
+              size: 0
+            })
+          })
+      }, 300)
+    })
+
+    return () => {
+      unsub()
+      clearTimeout(debounceTimer)
+    }
   }, [projectId, filePath])
 
   return state

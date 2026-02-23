@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron'
 import { terminalManager } from './TerminalManager'
 import { browserManager } from './BrowserManager'
 import { gitWatcher } from './GitWatcher'
+import { fileSystemManager } from './FileSystemManager'
 import { configManager } from './ConfigManager'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -84,6 +85,9 @@ class SessionManager {
         // Start git watcher
         gitWatcher.watch(projectId, project.path)
 
+        // Start file system watcher
+        fileSystemManager.watchProject(projectId, project.path)
+
         session.isActivated = true
         this.sessions.set(projectId, session)
       }
@@ -119,6 +123,7 @@ class SessionManager {
       terminalManager.killByProject(projectId)
       browserManager.destroy(projectId)
       gitWatcher.unwatch(projectId)
+      fileSystemManager.unwatchProject(projectId)
       this.sessions.delete(projectId)
     }
 
@@ -132,6 +137,7 @@ class SessionManager {
     for (const [projectId] of this.sessions) {
       terminalManager.killByProject(projectId)
     }
+    fileSystemManager.unwatchAll()
     this.sessions.clear()
     this.activeProjectId = null
   }

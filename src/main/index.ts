@@ -254,6 +254,11 @@ app.whenReady().then(async () => {
     browserManager.setMainWindow(mainWindow)
     gitWatcher.setMainWindow(mainWindow)
     fileSystemManager.setMainWindow(mainWindow)
+
+    // Wire FileSystemManager → GitWatcher: file changes trigger debounced git status check
+    fileSystemManager.onProjectChange((projectId) => {
+      gitWatcher.onFilesChanged(projectId)
+    })
   }
 
   // Start CDP proxy (reads Chrome's DevToolsActivePort, starts filtering proxy)

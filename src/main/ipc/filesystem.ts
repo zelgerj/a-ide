@@ -20,22 +20,4 @@ export function registerFilesystemIpc(): void {
       return fileSystemManager.readFile(args.filePath, project.path)
     }
   )
-
-  ipcMain.handle(
-    'filesystem:watch-dir',
-    async (_event, args: { projectId: string; dirPath: string }) => {
-      const project = configManager.getProject(args.projectId)
-      if (!project) throw new Error(`Unknown project: ${args.projectId}`)
-      fileSystemManager.watchDir(args.dirPath)
-      return { success: true }
-    }
-  )
-
-  ipcMain.handle(
-    'filesystem:unwatch-dir',
-    async (_event, args: { projectId: string; dirPath: string }) => {
-      fileSystemManager.unwatchDir(args.dirPath)
-      return { success: true }
-    }
-  )
 }

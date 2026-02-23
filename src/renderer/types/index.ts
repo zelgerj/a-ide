@@ -80,3 +80,9 @@ export interface OpenDiffState {
   fileName: string
   language: string
 }
+
+export interface FileChangeEvent {
+  projectId: string
+  changes: Array<{ path: string; type: 'create' | 'update' | 'delete' }>
+  affectedDirs: string[]
+}

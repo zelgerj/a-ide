@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
+import * as watcher from '@parcel/watcher'
 
 export interface DirEntry {
   name: string
@@ -16,6 +17,12 @@ export interface FileContent {
   truncated: boolean
   size: number
   mimeType?: string
+}
+
+export interface FileChangeEvent {
+  projectId: string
+  changes: Array<{ path: string; type: 'create' | 'update' | 'delete' }>
+  affectedDirs: string[]
 }
 
 const IGNORED_NAMES = new Set([
@@ -35,6 +42,18 @@ const IGNORED_NAMES = new Set([
   'Thumbs.db'
 ])
 
+// Directories to ignore for @parcel/watcher (recursive watching)
+const IGNORE_DIRS = [
+  '.git',
+  'node_modules',
+  '__pycache__',
+  '.next',
+  '.cache',
+  '.turbo',
+  '.parcel-cache',
+  '.venv'
+]
+
 const IMAGE_EXTENSIONS: Record<string, string> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -47,15 +66,18 @@ const IMAGE_EXTENSIONS: Record<string, string> = {
 
 const MAX_TEXT_SIZE = 2 * 1024 * 1024 // 2MB
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
-const DEBOUNCE_MS = 300
 
 class FileSystemManager {
   private mainWindow: BrowserWindow | null = null
-  private watchers: Map<string, fs.FSWatcher> = new Map()
-  private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
+  private subscriptions: Map<string, watcher.AsyncSubscription> = new Map()
+  private changeListeners: Array<(projectId: string) => void> = []
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
+  }
+
+  onProjectChange(listener: (projectId: string) => void): void {
+    this.changeListeners.push(listener)
   }
 
   private validatePath(requestedPath: string, projectRoot: string): void {
@@ -150,54 +172,70 @@ class FileSystemManager {
     }
   }
 
-  watchDir(dirPath: string): void {
-    // Don't duplicate watchers
-    if (this.watchers.has(dirPath)) return
+  async watchProject(projectId: string, projectPath: string): Promise<void> {
+    // Don't duplicate subscriptions
+    if (this.subscriptions.has(projectId)) return
 
     try {
-      const watcher = fs.watch(dirPath, () => {
-        // Debounce change events
-        const existing = this.debounceTimers.get(dirPath)
-        if (existing) clearTimeout(existing)
+      const subscription = await watcher.subscribe(
+        projectPath,
+        (err, events) => {
+          if (err) {
+            console.warn('[FileSystemManager] Watcher error for', projectId, err)
+            return
+          }
 
-        this.debounceTimers.set(
-          dirPath,
-          setTimeout(() => {
-            this.debounceTimers.delete(dirPath)
-            if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-              this.mainWindow.webContents.send('filesystem:dir-changed', { dirPath })
-            }
-          }, DEBOUNCE_MS)
-        )
-      })
+          const changes = events.map((event) => ({
+            path: event.path,
+            type: event.type
+          }))
 
-      watcher.on('error', () => {
-        this.unwatchDir(dirPath)
-      })
+          // Compute affected dirs (unique parent directories)
+          const affectedDirSet = new Set<string>()
+          for (const event of events) {
+            affectedDirSet.add(path.dirname(event.path))
+          }
+          const affectedDirs = Array.from(affectedDirSet)
 
-      this.watchers.set(dirPath, watcher)
-    } catch {
-      // Directory may not exist or be inaccessible
+          // Send to renderer
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send('filesystem:files-changed', {
+              projectId,
+              changes,
+              affectedDirs
+            })
+          }
+
+          // Notify internal listeners (e.g. GitWatcher)
+          for (const listener of this.changeListeners) {
+            listener(projectId)
+          }
+        },
+        {
+          ignore: IGNORE_DIRS
+        }
+      )
+
+      this.subscriptions.set(projectId, subscription)
+    } catch (err) {
+      console.warn('[FileSystemManager] Failed to watch project', projectId, err)
     }
   }
 
-  unwatchDir(dirPath: string): void {
-    const watcher = this.watchers.get(dirPath)
-    if (watcher) {
-      watcher.close()
-      this.watchers.delete(dirPath)
-    }
-    const timer = this.debounceTimers.get(dirPath)
-    if (timer) {
-      clearTimeout(timer)
-      this.debounceTimers.delete(dirPath)
+  async unwatchProject(projectId: string): Promise<void> {
+    const subscription = this.subscriptions.get(projectId)
+    if (subscription) {
+      await subscription.unsubscribe()
+      this.subscriptions.delete(projectId)
     }
   }
 
-  unwatchAll(): void {
-    for (const [dirPath] of this.watchers) {
-      this.unwatchDir(dirPath)
+  async unwatchAll(): Promise<void> {
+    const promises: Promise<void>[] = []
+    for (const [projectId] of this.subscriptions) {
+      promises.push(this.unwatchProject(projectId))
     }
+    await Promise.all(promises)
   }
 }
 

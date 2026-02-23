@@ -20,8 +20,6 @@ export interface ChangedFile {
   status: 'modified' | 'added' | 'deleted' | 'untracked' | 'renamed'
 }
 
-const POLL_INTERVAL = 5000 // 5 seconds
-
 function statusChanged(a: GitStatusInfo, b: GitStatusInfo): boolean {
   return (
     a.branch !== b.branch ||
@@ -34,11 +32,11 @@ function statusChanged(a: GitStatusInfo, b: GitStatusInfo): boolean {
 }
 
 class GitWatcher {
-  private watchers: Map<string, ReturnType<typeof setInterval>> = new Map()
   private mainWindow: BrowserWindow | null = null
   private lastStatuses: Map<string, GitStatusInfo> = new Map()
   private lastChangedFiles: Map<string, ChangedFile[]> = new Map()
   private projectPaths: Map<string, string> = new Map()
+  private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map()
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
@@ -54,30 +52,37 @@ class GitWatcher {
 
     this.projectPaths.set(projectId, projectPath)
 
-    // Initial poll
+    // Initial poll only — no interval. Subsequent polls are triggered by file change events.
     this.pollStatus(projectId, projectPath)
+  }
 
-    // Start polling
-    const interval = setInterval(() => {
-      this.pollStatus(projectId, projectPath)
-    }, POLL_INTERVAL)
+  onFilesChanged(projectId: string): void {
+    const projectPath = this.projectPaths.get(projectId)
+    if (!projectPath) return
 
-    this.watchers.set(projectId, interval)
+    const existing = this.debounceTimers.get(projectId)
+    if (existing) clearTimeout(existing)
+
+    this.debounceTimers.set(
+      projectId,
+      setTimeout(() => {
+        this.debounceTimers.delete(projectId)
+        this.pollStatus(projectId, projectPath)
+      }, 300)
+    )
   }
 
   unwatch(projectId: string): void {
-    const interval = this.watchers.get(projectId)
-    if (interval) {
-      clearInterval(interval)
-      this.watchers.delete(projectId)
-    }
+    const timer = this.debounceTimers.get(projectId)
+    if (timer) clearTimeout(timer)
+    this.debounceTimers.delete(projectId)
     this.lastStatuses.delete(projectId)
     this.lastChangedFiles.delete(projectId)
     this.projectPaths.delete(projectId)
   }
 
   unwatchAll(): void {
-    for (const [projectId] of this.watchers) {
+    for (const projectId of this.projectPaths.keys()) {
       this.unwatch(projectId)
     }
   }
